@@ -19,6 +19,36 @@ import { Command, CommandList, CommandInput, CommandEmpty, CommandGroup, Command
 import { createTask, getMembers, getTasks } from "@/service/api/project";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, useDroppable } from "@dnd-kit/core";
+import { arrayMove, SortableContext, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+
+// Komponen SortableTask untuk item task yang bisa di-drag
+function SortableTask({ task, children }: { task: API.Task.TaskModel, children: React.ReactNode }) {
+    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+        id: task.id,
+    });
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.5 : 1,
+    };
+    return (
+        <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+            {children}
+        </div>
+    );
+}
+
+// Komponen DroppableColumn untuk register kolom sebagai drop target
+function DroppableColumn({ id, children }: { id: string, children: React.ReactNode }) {
+    const { setNodeRef } = useDroppable({ id });
+    return (
+        <div ref={setNodeRef} id={id} className="flex-1 bg-gray-100 rounded-lg p-4 min-h-[400px]">
+            {children}
+        </div>
+    );
+}
 
 export default function ProjectPage() {
     const { id } = useParams();
@@ -80,6 +110,59 @@ export default function ProjectPage() {
         }
     }
 
+    const sensors = useSensors(
+        useSensor(PointerSensor, {
+            activationConstraint: {
+                distance: 5,
+            },
+        })
+    );
+
+    // Helper untuk update status task di state (dummy, nanti bisa dihubungkan ke backend)
+    function moveTask(taskId: string, from: string, to: string) {
+        let movedTask: API.Task.TaskModel | undefined;
+        if (from === "pending") {
+            movedTask = pendingTasks.find(t => t.id === taskId);
+            if (movedTask) setPendingTasks(prev => prev.filter(t => t.id !== taskId));
+        } else if (from === "in_progress") {
+            movedTask = inProgressTasks.find(t => t.id === taskId);
+            if (movedTask) setInProgressTasks(prev => prev.filter(t => t.id !== taskId));
+        } else if (from === "completed") {
+            movedTask = completedTasks.find(t => t.id === taskId);
+            if (movedTask) setCompletedTasks(prev => prev.filter(t => t.id !== taskId));
+        }
+        if (movedTask) {
+            const updatedTask = { ...movedTask, status: to };
+            if (to === "pending") setPendingTasks(prev => [updatedTask, ...prev]);
+            else if (to === "in_progress") setInProgressTasks(prev => [updatedTask, ...prev]);
+            else if (to === "completed") setCompletedTasks(prev => [updatedTask, ...prev]);
+        }
+    }
+
+    function findTaskById(taskId: string): { status: string } | undefined {
+        if (pendingTasks.some(t => t.id === taskId)) return { status: "pending" };
+        if (inProgressTasks.some(t => t.id === taskId)) return { status: "in_progress" };
+        if (completedTasks.some(t => t.id === taskId)) return { status: "completed" };
+        return undefined;
+    }
+
+    function onDragEnd(event: any) {
+        const { active, over } = event;
+        if (!over) return;
+        const activeId = active.id;
+        const overId = over.id;
+        // Jika drag ke kolom lain
+        if (activeId !== overId && ["pending","in_progress","completed"].includes(overId)) {
+            const from = findTaskById(activeId)?.status;
+            const to = overId;
+            if (from && to && from !== to) {
+                moveTask(activeId, from, to);
+                // TODO: Panggil API update status task jika backend sudah ada
+                console.log(from, to)
+            }
+        }
+    }
+
 
     useEffect(() => {
         if (id) {
@@ -93,7 +176,7 @@ export default function ProjectPage() {
     }, [id]);
 
     return (
-        <>
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
             <div className="container mx-auto px-4 py-2 my-4">
                 <div className="flex items-center justify-between">
                     <h1 className="text-2xl font-bold">Project</h1>
@@ -104,65 +187,78 @@ export default function ProjectPage() {
             </div>
 
             <div className="flex flex-col md:flex-row gap-4 my-8 container mx-auto px-4 py-2">
-                <div className="flex-1 bg-gray-100 rounded-lg p-4 min-h-[400px]">
+                {/* Pending Column */}
+                <SortableContext items={pendingTasks.map(t => t.id)} id="pending" strategy={verticalListSortingStrategy}>
+                <DroppableColumn id="pending">
                     <h2 className="text-lg font-bold mb-4">Pending</h2>
                     <div className="min-h-[60px] flex flex-col gap-2">
                         {pendingTasks.map((task) => (
-                            <div key={task.id} className="bg-white rounded shadow p-3 cursor-move flex flex-col gap-2">
-                                {task.title}
-                                <div className="flex items-center gap-2">
-                                <Avatar>
-                                    <AvatarImage src={task.assignee.image} />
-                                    <AvatarFallback>
-                                        {task.assignee.name.charAt(0)}
-                                    </AvatarFallback>
-                                </Avatar>
-                                <p>{task.assignee.name}</p>
+                            <SortableTask key={task.id} task={task}>
+                                <div className="bg-white rounded shadow p-3 cursor-move flex flex-col gap-2">
+                                    {task.title}
+                                    <div className="flex items-center gap-2">
+                                    <Avatar>
+                                        <AvatarImage src={task.assignee.image} />
+                                        <AvatarFallback>
+                                            {task.assignee.name.charAt(0)}
+                                        </AvatarFallback>
+                                    </Avatar>
+                                    <p>{task.assignee.name}</p>
+                                    </div>
                                 </div>
-                            </div>
+                            </SortableTask>
                         ))}
                     </div>
-                </div>
+                </DroppableColumn>
+                </SortableContext>
                 {/* On Progress Column */}
-                <div className="flex-1 bg-gray-100 rounded-lg p-4 min-h-[400px]">
+                <SortableContext items={inProgressTasks.map(t => t.id)} id="in_progress" strategy={verticalListSortingStrategy}>
+                <DroppableColumn id="in_progress">
                     <h2 className="text-lg font-bold mb-4">On Progress</h2>
                     <div className="min-h-[60px] flex flex-col gap-2">
                         {inProgressTasks.map((task) => (
-                            <div key={task.id} className="bg-white rounded shadow p-3 cursor-move flex flex-col gap-2">
-                                {task.title}
-                                <div className="flex items-center gap-2">
-                                <Avatar>
-                                    <AvatarImage src={task.assignee.image} />
-                                    <AvatarFallback>
-                                        {task.assignee.name.charAt(0)}
-                                    </AvatarFallback>
-                                </Avatar>
-                                <p>{task.assignee.name}</p>
+                            <SortableTask key={task.id} task={task}>
+                                <div className="bg-white rounded shadow p-3 cursor-move flex flex-col gap-2">
+                                    {task.title}
+                                    <div className="flex items-center gap-2">
+                                    <Avatar>
+                                        <AvatarImage src={task.assignee.image} />
+                                        <AvatarFallback>
+                                            {task.assignee.name.charAt(0)}
+                                        </AvatarFallback>
+                                    </Avatar>
+                                    <p>{task.assignee.name}</p>
+                                    </div>
                                 </div>
-                            </div>
+                            </SortableTask>
                         ))}
                     </div>
-                </div>
+                </DroppableColumn>
+                </SortableContext>
                 {/* Done Column */}
-                <div className="flex-1 bg-gray-100 rounded-lg p-4 min-h-[400px]">
+                <SortableContext items={completedTasks.map(t => t.id)} id="completed" strategy={verticalListSortingStrategy}>
+                <DroppableColumn id="completed">
                     <h2 className="text-lg font-bold mb-4">Done</h2>
                     <div className="min-h-[60px] flex flex-col gap-2">
                         {completedTasks.map((task) => (
-                            <div key={task.id} className="bg-white rounded shadow p-3 cursor-move flex flex-col gap-2">
-                                {task.title}
-                                <div className="flex items-center gap-2">
-                                <Avatar>
-                                    <AvatarImage src={task.assignee.image} />
-                                    <AvatarFallback>
-                                        {task.assignee.name.charAt(0)}
-                                    </AvatarFallback>
-                                </Avatar>
-                                <p>{task.assignee.name}</p>
+                            <SortableTask key={task.id} task={task}>
+                                <div className="bg-white rounded shadow p-3 cursor-move flex flex-col gap-2">
+                                    {task.title}
+                                    <div className="flex items-center gap-2">
+                                    <Avatar>
+                                        <AvatarImage src={task.assignee.image} />
+                                        <AvatarFallback>
+                                            {task.assignee.name.charAt(0)}
+                                        </AvatarFallback>
+                                    </Avatar>
+                                    <p>{task.assignee.name}</p>
+                                    </div>
                                 </div>
-                            </div>
+                            </SortableTask>
                         ))}
                     </div>
-                </div>
+                </DroppableColumn>
+                </SortableContext>
             </div>
             <Dialog open={isOpen} onOpenChange={onOpenChange} >
                 <DialogContent>
@@ -283,6 +379,6 @@ export default function ProjectPage() {
                     </Form>
                 </DialogContent>
             </Dialog>
-        </>
+        </DndContext>
     )
 }
