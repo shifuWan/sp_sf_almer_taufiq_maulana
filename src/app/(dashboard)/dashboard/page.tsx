@@ -7,6 +7,7 @@ import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, Di
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { EditProjectDialog } from "./module/edit-project-dialog";
 import { projectCreateSchema } from "@/lib/validators/project";
 import { createProject, deleteProject, fetchProjects } from "@/service/api/project";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -24,6 +25,9 @@ export default function Dashboard() {
     const [projects, setProjects] = useState<API.Project.MembershipModel[]>([])
     const [isOpenDelete, setIsOpenDelete] = useState<boolean>(false)
     const [projectId, setProjectId] = useState<string>("")
+    const [isOpenEdit, setIsOpenEdit] = useState<boolean>(false)
+    const [selectedProject, setSelectedProject] = useState<API.Project.MembershipModel | null>(null)
+
     const form = useForm<z.infer<typeof projectCreateSchema>>({
         resolver: zodResolver(projectCreateSchema),
         defaultValues: {
@@ -65,7 +69,6 @@ export default function Dashboard() {
     }
 
     async function handleDeleteProject() {
-
         try {
             const { data } = await deleteProject(projectId)
             toast.success(data?.message || "Project deleted successfully")
@@ -74,6 +77,11 @@ export default function Dashboard() {
             setIsOpenDelete(false)
             await getProjects()
         }
+    }
+
+    function handleEditProject(project: API.Project.MembershipModel) {
+        setSelectedProject(project)
+        setIsOpenEdit(true)
     }
 
     useEffect(() => {
@@ -110,15 +118,18 @@ export default function Dashboard() {
                             <Link href={`/dashboard/project/${item.id}`} className="flex-1">
                                 <h2 className="text-lg font-bold">{item.project.name}</h2>
                             </Link>
-                            <DropdownMenu>
+                            {item.project.ownerId === item.userId && (
+                                <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <EllipsisVertical className="w-4 h-4" />
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent>
-                                    <DropdownMenuItem className="cursor-pointer">
+
+                                    <DropdownMenuItem className="cursor-pointer" onClick={() => handleEditProject(item)}>
                                         <Edit className="w-4 h-4" />
                                         Edit Project
                                     </DropdownMenuItem>
+
                                     <DropdownMenuItem className="cursor-pointer" onClick={() => {
                                         setIsOpenDelete(true)
                                         setProjectId(item.project.id)
@@ -126,8 +137,9 @@ export default function Dashboard() {
                                         <Trash2 className="w-4 h-4 text-red-500" />
                                         <span className="text-red-500">Delete Project</span>
                                     </DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            )}
                         </div>
                     </div>
                 ))}
@@ -188,7 +200,15 @@ export default function Dashboard() {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
-
+            {selectedProject && (
+                <EditProjectDialog
+                    open={isOpenEdit}
+                    onOpenChange={setIsOpenEdit}
+                    projectId={selectedProject.project.id}
+                    projectName={selectedProject.project.name}
+                    onSuccess={getProjects}
+                />
+            )}
         </div >
     )
 }
