@@ -26,4 +26,27 @@ declare namespace API {
             confirmPassword: string
         }
     }
+
+    namespace Project {
+        interface ProjectModel {
+            id: string
+            name: string
+            createdAt: string
+            updatedAt: string
+        }
+
+        interface MembershipModel {
+            id: string
+            userId: string
+            projectId: string
+            createdAt: string
+            updatedAt: string
+            project: ProjectModel
+        }
+
+        type ProjectCreateParams = Pick<ProjectModel, "name">
+
+        type ProjectResponseList = Common.ApiResponse<MembershipModel[]>
+    }
+    
 }
