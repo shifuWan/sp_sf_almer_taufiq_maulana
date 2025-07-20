@@ -12,7 +12,7 @@ export const api = axios.create({
 
 api.interceptors.response.use(
     (response) => {
-        toast.success(response.data.message)
+        // toast.success(response.data.message)
         return response
     },
     (error) => {

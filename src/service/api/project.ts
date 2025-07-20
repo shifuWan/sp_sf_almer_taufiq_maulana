@@ -7,3 +7,7 @@ export async function createProject(data: API.Project.ProjectCreateParams) {
 export async function fetchProjects() {
     return api.get<API.Project.ProjectResponseList>("/api/project")
 }
+
+export async function deleteProject(id: string) {
+    return api.delete<API.Common.ApiResponse>(`/api/project/${id}`)
+}
