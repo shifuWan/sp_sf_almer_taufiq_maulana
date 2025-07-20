@@ -115,7 +115,7 @@ export default function Dashboard() {
                             <Badge variant="outline">{item.project.ownerId === item.userId ? "Owner" : "Member"}</Badge>
                         </div>
                         <div className="flex items-center justify-between">
-                            <Link href={`/dashboard/project/${item.id}`} className="flex-1">
+                            <Link href={`/dashboard/project/${item.projectId}`} className="flex-1">
                                 <h2 className="text-lg font-bold">{item.project.name}</h2>
                             </Link>
                             {item.project.ownerId === item.userId && (
