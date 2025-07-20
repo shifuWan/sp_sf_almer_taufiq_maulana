@@ -47,6 +47,11 @@ declare namespace API {
 
         type ProjectCreateParams = Pick<ProjectModel, "name">
 
+        type ProjectEditParams = {
+            name: string
+            members?: string[]
+        }
+
         type ProjectResponseList = Common.ApiResponse<MembershipModel[]>
     }
     
