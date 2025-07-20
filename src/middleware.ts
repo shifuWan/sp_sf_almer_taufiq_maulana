@@ -1,11 +1,13 @@
 import { auth } from "@/auth"
 import { NextRequest, NextResponse } from "next/server"
 import { errorResponse } from "@/lib/utils"
+import { log } from "console"
 
-export default auth( async (req: NextRequest, context: any) => {
+export default auth( async (req: NextRequest) => {
     const { nextUrl } = req
-    const isLoggedIn = !!context.auth
-    
+    const session = await auth()
+    const isLoggedIn = !!session
+
     // Get the pathname from the URL
     const pathname = nextUrl.pathname
     
@@ -42,7 +44,7 @@ export default auth( async (req: NextRequest, context: any) => {
     }
     
     // jika user sudah login dan mengakses api/login atau api/register maka return 404
-    if (isLoggedIn && pathname === '/api/login' || pathname === '/api/register') {
+    if (isLoggedIn && (pathname === '/api/login' || pathname === '/api/register')) {
         return errorResponse("Not Found", 404)
     }
     
