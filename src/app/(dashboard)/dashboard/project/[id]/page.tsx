@@ -16,14 +16,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { Command, CommandList, CommandInput, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
-import { createTask, getMembers } from "@/service/api/project";
+import { createTask, getMembers, getTasks } from "@/service/api/project";
 import { toast } from "sonner";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export default function ProjectPage() {
     const { id } = useParams();
     const [isOpen, setIsOpen] = useState(false);
     const [members, setMembers] = useState<{ id: string; userId: string; projectId: string; user: { id: string; name: string; email: string } }[]>([]);
     const [isLoadingMembers, setIsLoadingMembers] = useState(false);
+    const [pendingTasks, setPendingTasks] = useState<API.Task.TaskModel[]>([]);
+    const [inProgressTasks, setInProgressTasks] = useState<API.Task.TaskModel[]>([]);
+    const [completedTasks, setCompletedTasks] = useState<API.Task.TaskModel[]>([]);
 
     const form = useForm<z.infer<typeof taskCreateSchema>>({
         resolver: zodResolver(taskCreateSchema),
@@ -45,6 +49,9 @@ export default function ProjectPage() {
             const {data: response} = await createTask(id as string, data)
             onOpenChange(false)
             toast.success(response.message)
+            fetchTasks(id as string, "pending")
+            fetchTasks(id as string, "in_progress")
+            fetchTasks(id as string, "completed")
         } catch (error) {
             console.error("Error creating task:", error);
         }
@@ -62,9 +69,26 @@ export default function ProjectPage() {
         }
     }
 
+    async function fetchTasks(projectId: string, status: "pending" | "in_progress" | "completed") {
+        const response = await getTasks(projectId, status);
+        if (status === "pending") {
+            setPendingTasks(response.data?.data || []);
+        } else if (status === "in_progress") {
+            setInProgressTasks(response.data?.data || []);
+        } else if (status === "completed") {
+            setCompletedTasks(response.data?.data || []);
+        }
+    }
+
+
     useEffect(() => {
         if (id) {
             fetchMembers(id as string);
+            Promise.all([
+                fetchTasks(id as string, "pending"),
+                fetchTasks(id as string, "in_progress"),
+                fetchTasks(id as string, "completed"),
+            ])
         }
     }, [id]);
 
@@ -82,30 +106,61 @@ export default function ProjectPage() {
             <div className="flex flex-col md:flex-row gap-4 my-8 container mx-auto px-4 py-2">
                 <div className="flex-1 bg-gray-100 rounded-lg p-4 min-h-[400px]">
                     <h2 className="text-lg font-bold mb-4">Pending</h2>
-                    {/* TODO: Render pending tasks here */}
                     <div className="min-h-[60px] flex flex-col gap-2">
-                        {/* Example Card */}
-                        <div className="bg-white rounded shadow p-3 cursor-move">Task 1</div>
+                        {pendingTasks.map((task) => (
+                            <div key={task.id} className="bg-white rounded shadow p-3 cursor-move flex flex-col gap-2">
+                                {task.title}
+                                <div className="flex items-center gap-2">
+                                <Avatar>
+                                    <AvatarImage src={task.assignee.image} />
+                                    <AvatarFallback>
+                                        {task.assignee.name.charAt(0)}
+                                    </AvatarFallback>
+                                </Avatar>
+                                <p>{task.assignee.name}</p>
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 </div>
                 {/* On Progress Column */}
                 <div className="flex-1 bg-gray-100 rounded-lg p-4 min-h-[400px]">
                     <h2 className="text-lg font-bold mb-4">On Progress</h2>
-                    {/* TODO: Render onprogress tasks here */}
                     <div className="min-h-[60px] flex flex-col gap-2">
-                        {/* Example Card */}
-                        <div className="bg-white rounded shadow p-3 cursor-move">Task 1</div>
-
+                        {inProgressTasks.map((task) => (
+                            <div key={task.id} className="bg-white rounded shadow p-3 cursor-move flex flex-col gap-2">
+                                {task.title}
+                                <div className="flex items-center gap-2">
+                                <Avatar>
+                                    <AvatarImage src={task.assignee.image} />
+                                    <AvatarFallback>
+                                        {task.assignee.name.charAt(0)}
+                                    </AvatarFallback>
+                                </Avatar>
+                                <p>{task.assignee.name}</p>
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 </div>
                 {/* Done Column */}
                 <div className="flex-1 bg-gray-100 rounded-lg p-4 min-h-[400px]">
                     <h2 className="text-lg font-bold mb-4">Done</h2>
-                    {/* TODO: Render done tasks here */}
                     <div className="min-h-[60px] flex flex-col gap-2">
-                        {/* Example Card */}
-                        <div className="bg-white rounded shadow p-3 cursor-move">Task 1</div>
-
+                        {completedTasks.map((task) => (
+                            <div key={task.id} className="bg-white rounded shadow p-3 cursor-move flex flex-col gap-2">
+                                {task.title}
+                                <div className="flex items-center gap-2">
+                                <Avatar>
+                                    <AvatarImage src={task.assignee.image} />
+                                    <AvatarFallback>
+                                        {task.assignee.name.charAt(0)}
+                                    </AvatarFallback>
+                                </Avatar>
+                                <p>{task.assignee.name}</p>
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 </div>
             </div>

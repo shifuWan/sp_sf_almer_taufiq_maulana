@@ -25,3 +25,7 @@ export async function createTask(id: string, data: z.infer<typeof taskCreateSche
 export async function getMembers(id: string) {
     return api.get<API.Common.ApiResponse<{ id: string; userId: string; projectId: string; user: { id: string; name: string; email: string } }[]>>(`/api/project/${id}/member`)
 }
+
+export async function getTasks(id: string, status: "pending" | "in_progress" | "completed") {
+    return api.get<API.Common.ApiResponse<API.Task.TaskModel[]>>(`/api/project/${id}/task?status=${status}`)
+}

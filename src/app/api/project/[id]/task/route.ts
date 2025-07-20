@@ -37,3 +37,26 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     return successResponse("Task created successfully", 200)
 }
+
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+    const { id } = await params;
+    const { searchParams } = new URL(request.url);
+    const status = searchParams.get("status") || "";
+
+    const tasks = await prisma.tasks.findMany({
+        where: {
+            projectId: id,
+            status: status as "pending" | "in_progress" | "completed",
+        },
+        include: {
+            assignee: {
+                select: {
+                    name: true,
+                    email: true,
+                },
+            },
+        },
+    })
+
+    return successResponse("Tasks fetched successfully", 200, tasks)
+}

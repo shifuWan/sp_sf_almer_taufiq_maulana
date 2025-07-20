@@ -27,6 +27,15 @@ declare namespace API {
         }
     }
 
+    namespace User {
+        interface UserModel {
+            id: string
+            name: string
+            email: string
+            image: string
+        }
+    }
+
     namespace Project {
         interface ProjectModel {
             id: string
@@ -65,8 +74,11 @@ declare namespace API {
             projectId: string
             createdAt: string
             updatedAt: string
+            assignee: User.UserModel
         }
 
         type TaskCreateParams = Pick<TaskModel, "title" | "description" | "status" | "assigneeId">
+        type TaskResponseList = Common.ApiResponse<TaskModel[]>
     }
+
 }
