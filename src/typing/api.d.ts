@@ -18,5 +18,12 @@ declare namespace API {
             email: string
             password: string
         }
+
+        interface RegisterParams {
+            name: string
+            email: string
+            password: string
+            confirmPassword: string
+        }
     }
 }

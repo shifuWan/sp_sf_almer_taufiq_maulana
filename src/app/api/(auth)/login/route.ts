@@ -3,16 +3,17 @@ import { errorResponse, successResponse } from "@/lib/utils";
 import { loginSchema } from "@/lib/validators/auth";
 import z from "zod";
 import { signIn } from "@/auth";
+import { CredentialsSignin } from "next-auth";
 
 
 export async function POST(request: NextRequest) {
     const requestBody = await request.json();
- 
+
     const { success, data, error } = loginSchema.safeParse(requestBody);
 
     if (!success) {
         const errors = z.treeifyError(error).properties
-        return errorResponse("errors", 400, errors);
+        return errorResponse("email or password incorrect", 400, errors);
     }
 
     try {
@@ -21,11 +22,12 @@ export async function POST(request: NextRequest) {
             password: data.password,
             redirect: false,
         })
-        
-
     } catch (error) {
-        console.log(error);
-        return errorResponse("Invalid credentials", 401);
+        if (error instanceof CredentialsSignin) {
+            return errorResponse("email or password incorrect", 401);
+        } else {
+            return errorResponse("An error occurred while logging in", 500);
+        }
     }
 
     return successResponse("Login successful", 200);
