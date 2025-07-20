@@ -1,4 +1,6 @@
+import { taskCreateSchema } from "@/lib/validators/project"
 import { api } from "@/service/request"
+import z from "zod"
 
 export async function createProject(data: API.Project.ProjectCreateParams) {
     return api.post<API.Common.ApiResponse>("/api/project", data)
@@ -14,4 +16,12 @@ export async function deleteProject(id: string) {
 
 export async function editProject(id: string, data: API.Project.ProjectEditParams) {
     return api.put<API.Common.ApiResponse>(`/api/project/${id}`, data)
+}
+
+export async function createTask(id: string, data: z.infer<typeof taskCreateSchema>) {
+    return api.post<API.Common.ApiResponse>(`/api/project/${id}/task`, data)
+}
+
+export async function getMembers(id: string) {
+    return api.get<API.Common.ApiResponse<{ id: string; userId: string; projectId: string; user: { id: string; name: string; email: string } }[]>>(`/api/project/${id}/member`)
 }

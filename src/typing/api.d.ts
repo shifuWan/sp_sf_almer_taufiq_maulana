@@ -54,5 +54,19 @@ declare namespace API {
 
         type ProjectResponseList = Common.ApiResponse<MembershipModel[]>
     }
-    
+
+    namespace Task {
+        interface TaskModel {
+            id: string
+            title: string
+            description: string
+            status: string
+            assigneeId: string
+            projectId: string
+            createdAt: string
+            updatedAt: string
+        }
+
+        type TaskCreateParams = Pick<TaskModel, "title" | "description" | "status" | "assigneeId">
+    }
 }
