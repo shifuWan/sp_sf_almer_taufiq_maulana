@@ -16,13 +16,15 @@ model User {
   password      String? // Optional for password-based authentication
   accounts      Account[]
   sessions      Session[]
-  projects      Projects[] // projects owned by the user
+  projects      Projects[]
   memberships   Membership[]
+  tasks         Tasks[]
   // Optional for WebAuthn support
   Authenticator Authenticator[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
 }
 
 model Account {
@@ -105,6 +107,7 @@ model Tasks {
   updatedAt DateTime @updatedAt
 
   project Projects @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  assignee User     @relation(fields: [assigneeId], references: [id])
 }
 
 model Membership {
