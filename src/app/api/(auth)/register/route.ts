@@ -31,9 +31,5 @@ export async function POST(request: NextRequest) {
         return errorResponse("Failed to create user", 500);
     }
 
-    return successResponse("Register successful", 200);
-}
-
-export async function GET(request: NextRequest) {
-    return successResponse("Register successful", 200);
+    return successResponse("Registration successful! Please login to continue.", 200);
 }

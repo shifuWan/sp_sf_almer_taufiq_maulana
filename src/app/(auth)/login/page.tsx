@@ -76,7 +76,7 @@ export default function LoginForm() {
                                        required/>
                             </div>
                             <div className="flex flex-col gap-3">
-                                <Button type="submit" className="w-full" disabled={isLoading} >
+                                <Button type="submit" className="w-full cursor-pointer" disabled={isLoading} >
                                     {isLoading ? (<span className="flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" /> Login</span>) : (<span>Login</span>)}
                                 </Button>
                             </div>
