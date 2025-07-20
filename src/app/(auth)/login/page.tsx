@@ -32,7 +32,6 @@ export default function LoginForm() {
         setIsLoading(true)
         try {
             await login(email, password)
-            toast.success("Login successfully")
             setIsLoading(false)
             router.replace("/dashboard")
         } catch (error) {
