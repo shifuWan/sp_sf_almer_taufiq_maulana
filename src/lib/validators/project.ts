@@ -4,6 +4,11 @@ export const projectCreateSchema = z.object({
     name: z.string().min(1, { message: "Name is required" }),
 })
 
+export const projectEditSchema = z.object({
+    name: z.string().min(1, { message: "Name is required" }),
+    members: z.array(z.string()).optional(),
+})
+
 export const taskCreateSchema = z.object({
     title: z.string()
         .min(1, { message: "Title is required" })
@@ -14,3 +19,4 @@ export const taskCreateSchema = z.object({
     }),
     assigneeId: z.string().min(1, { message: "Assignee ID is required" }),
 })
+

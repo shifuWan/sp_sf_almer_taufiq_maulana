@@ -1,7 +1,9 @@
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { errorResponse, successResponse } from "@/lib/utils"
+import { projectEditSchema } from "@/lib/validators/project"
 import { NextRequest } from "next/server"
+import z from "zod"
 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     const { id } = await params
@@ -47,6 +49,12 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     if (!session?.user) { return errorResponse("Unauthorized", 401) }
 
     const body = await req.json()
+    const { success, data, error } = await projectEditSchema.safeParseAsync(body)
+
+    if (!success) {
+        const errors = z.treeifyError(error).properties
+        return errorResponse("Invalid request body", 400, errors)
+    }
 
     const project = await prisma.projects.findFirst({
         where: {
@@ -70,7 +78,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
                 userId: member,
             })),
         })
-    
+
         await tx.projects.update({
             where: {
                 id: id,

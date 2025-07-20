@@ -11,3 +11,7 @@ export async function fetchProjects() {
 export async function deleteProject(id: string) {
     return api.delete<API.Common.ApiResponse>(`/api/project/${id}`)
 }
+
+export async function editProject(id: string, data: API.Project.ProjectEditParams) {
+    return api.put<API.Common.ApiResponse>(`/api/project/${id}`, data)
+}
