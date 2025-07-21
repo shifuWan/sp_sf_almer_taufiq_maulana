@@ -5,8 +5,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { taskCreateSchema } from "@/lib/validators/project";
-import { Check, ChevronsUpDown, PlusIcon } from "lucide-react";
-import { useParams } from "next/navigation";
+import { ArrowLeftIcon, Check, ChevronsUpDown, PlusIcon } from "lucide-react";
+import { useParams, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -62,6 +62,7 @@ function DroppableColumn({ id, children }: { id: string, children: React.ReactNo
 export default function ProjectPage() {
     const { data: session } = useSession();
     const { id } = useParams();
+    const router = useRouter();
     const [isOpen, setIsOpen] = useState(false);
     const [members, setMembers] = useState<{ id: string; userId: string; projectId: string; user: { id: string; name: string; email: string } }[]>([]);
     const [isLoadingMembers, setIsLoadingMembers] = useState(false);
@@ -212,7 +213,13 @@ export default function ProjectPage() {
         >
             <div className="container mx-auto px-4 py-2 my-4">
                 <div className="flex items-center justify-between">
-                    <h1 className="text-2xl font-bold">Project</h1>
+                    <h1 className="text-2xl font-bold ">
+                        <Button variant="outline" className="cursor-pointer rounded-full mr-2" size={"icon"}  onClick={() => router.back()}>
+                            <ArrowLeftIcon className="w-4 h-4" />
+                        </Button>
+                        Project
+                    </h1>
+                    
                     <div className="flex gap-2"> 
                         {currentProject.current?.ownerId === session?.user?.id && (
                             <Button variant="outline" className="cursor-pointer" onClick={() => setIsOpen(true)}>
