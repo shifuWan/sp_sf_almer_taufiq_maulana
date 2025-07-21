@@ -18,6 +18,7 @@ import { useCallback, useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { toast } from "sonner"
 import z from "zod"
+import { useSession } from "next-auth/react"
 
 interface EditProjectDialogProps {
     open: boolean
@@ -48,7 +49,7 @@ export function EditProjectDialog({
         },
     })
 
-
+    const { data: session } = useSession();
     const [searchQuery, setSearchQuery] = useState("")
     const [searchResults, setSearchResults] = useState<User[]>([])
     const [selectedUsers, setSelectedUsers] = useState<User[]>([])
@@ -101,7 +102,7 @@ export function EditProjectDialog({
     async function onSubmit(data: z.infer<typeof projectEditSchema>) {
         try {
             const memberIds = selectedUsers.map(user => user.id)
-            const res = await editProject(projectId, { ...data, members: memberIds })
+            await editProject(projectId, { ...data, members: [...memberIds, session?.user?.id || ""] })
             onOpenChange(false)
             onSuccess?.()
             toast.success("Project updated successfully")
