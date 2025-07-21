@@ -92,3 +92,17 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
     return successResponse("Project updated successfully", 200)
 }
+
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+    const { id = "" } = await params
+
+    const project = await prisma.projects.findFirst({
+        where: {
+            id: id,
+        },
+    })
+
+    if (!project) { return errorResponse("Project not found", 404) }
+
+    return successResponse("Project fetched successfully", 200, project)
+}

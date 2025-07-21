@@ -1,4 +1,4 @@
-import { taskCreateSchema } from "@/lib/validators/project"
+import { taskCreateSchema, taskPatchSchema } from "@/lib/validators/project"
 import { api } from "@/service/request"
 import z from "zod"
 
@@ -28,4 +28,12 @@ export async function getMembers(id: string) {
 
 export async function getTasks(id: string, status: "pending" | "in_progress" | "completed") {
     return api.get<API.Common.ApiResponse<API.Task.TaskModel[]>>(`/api/project/${id}/task?status=${status}`)
+}
+
+export async function getProjectById(id: string) {
+    return api.get<API.Project.ProjectResponse>(`/api/project/${id}`)
+}
+
+export async function patchTask(id: string, taskId: string, data: z.infer<typeof taskPatchSchema>) {
+    return api.put<API.Common.ApiResponse>(`/api/project/${id}/task/${taskId}`, data)
 }
