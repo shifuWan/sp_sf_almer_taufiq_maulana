@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { errorResponse, successResponse } from "@/lib/utils";
 import { taskCreateSchema } from "@/lib/validators/project";
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import z from "zod";
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
