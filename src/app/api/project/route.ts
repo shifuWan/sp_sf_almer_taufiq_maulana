@@ -61,11 +61,29 @@ export async function GET(req: NextRequest) {
             where: {
                 userId: session.user.id as string,
             },
+        })
+
+        const projectsWithMembers = await prisma.projects.findMany({
+            where: {
+                id: {
+                    in: projects.map((project) => project.projectId),
+                },
+            },
             include: {
-                project: true,
+                memberships: {
+                    include: {
+                        user: {
+                            select: {
+                                name: true,
+                                image: true,
+                            },
+                        },
+                    },
+                },
             },
         })
-        return successResponse("Projects fetched successfully", 200, projects)
+
+        return successResponse("Projects fetched successfully", 200, projectsWithMembers)
     } catch (error) {
         return errorResponse("Failed to fetch projects", 500)
     }

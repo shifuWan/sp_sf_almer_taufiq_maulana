@@ -18,15 +18,18 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import z from "zod";
+import { useSession } from "next-auth/react";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 export default function Dashboard() {
+    const { data: session } = useSession()
     const [isOpen, setIsOpen] = useState<boolean>(false)
     const [isLoading, setIsLoading] = useState<boolean>(true)
-    const [projects, setProjects] = useState<API.Project.MembershipModel[]>([])
+    const [projects, setProjects] = useState<API.Project.ProjectMembershipModel[]>([])
     const [isOpenDelete, setIsOpenDelete] = useState<boolean>(false)
     const [projectId, setProjectId] = useState<string>("")
     const [isOpenEdit, setIsOpenEdit] = useState<boolean>(false)
-    const [selectedProject, setSelectedProject] = useState<API.Project.MembershipModel | null>(null)
+    const [selectedProject, setSelectedProject] = useState<API.Project.ProjectMembershipModel | null>(null)
 
     const form = useForm<z.infer<typeof projectCreateSchema>>({
         resolver: zodResolver(projectCreateSchema),
@@ -79,7 +82,7 @@ export default function Dashboard() {
         }
     }
 
-    function handleEditProject(project: API.Project.MembershipModel) {
+    function handleEditProject(project: API.Project.ProjectMembershipModel) {
         setSelectedProject(project)
         setIsOpenEdit(true)
     }
@@ -111,32 +114,42 @@ export default function Dashboard() {
             <div className="grid grid-cols-1 mt-4 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {projects.length > 0 && projects.map((item) => (
                     <div key={item.id} className="bg-white p-4 rounded-lg flex flex-col  shadow-md">
-                        <div className="flex items-center gap-2">
-                            <Badge variant="outline">{item.project.ownerId === item.userId ? "Owner" : "Member"}</Badge>
+                        <div className="flex items-center gap-2 justify-between">
+                            <Badge variant="outline">{item.ownerId === session?.user?.id ? "Owner" : "Member"}</Badge>
+                            <div className="*:data-[slot=avatar]:ring-background flex -space-x-4 *:data-[slot=avatar]:ring-2 *:data-[slot=avatar]:grayscale">
+                                {item.memberships.map((member) => (
+                                    <Avatar key={member.id}>
+                                        <AvatarImage src={member.user.image} />
+                                        <AvatarFallback>
+                                            {member.user.name.charAt(0)}
+                                        </AvatarFallback>
+                                    </Avatar>
+                                ))}
+                            </div>
                         </div>
                         <div className="flex items-center justify-between">
-                            <Link href={`/dashboard/project/${item.projectId}`} className="flex-1">
-                                <h2 className="text-lg font-bold">{item.project.name}</h2>
+                            <Link href={`/dashboard/project/${item.id}`} className="flex-1">
+                                <h2 className="text-lg font-bold">{item.name}</h2>
                             </Link>
-                            {item.project.ownerId === item.userId && (
+                            {item.ownerId === session?.user?.id && (
                                 <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <EllipsisVertical className="w-4 h-4" />
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent>
+                                    <DropdownMenuTrigger asChild>
+                                        <EllipsisVertical className="w-4 h-4" />
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent>
 
-                                    <DropdownMenuItem className="cursor-pointer" onClick={() => handleEditProject(item)}>
-                                        <Edit className="w-4 h-4" />
-                                        Edit Project
-                                    </DropdownMenuItem>
+                                        <DropdownMenuItem className="cursor-pointer" onClick={() => handleEditProject(item)}>
+                                            <Edit className="w-4 h-4" />
+                                            Edit Project
+                                        </DropdownMenuItem>
 
-                                    <DropdownMenuItem className="cursor-pointer" onClick={() => {
-                                        setIsOpenDelete(true)
-                                        setProjectId(item.project.id)
-                                    }}>
-                                        <Trash2 className="w-4 h-4 text-red-500" />
-                                        <span className="text-red-500">Delete Project</span>
-                                    </DropdownMenuItem>
+                                        <DropdownMenuItem className="cursor-pointer" onClick={() => {
+                                            setIsOpenDelete(true)
+                                            setProjectId(item.id)
+                                        }}>
+                                            <Trash2 className="w-4 h-4 text-red-500" />
+                                            <span className="text-red-500">Delete Project</span>
+                                        </DropdownMenuItem>
                                     </DropdownMenuContent>
                                 </DropdownMenu>
                             )}
@@ -204,8 +217,8 @@ export default function Dashboard() {
                 <EditProjectDialog
                     open={isOpenEdit}
                     onOpenChange={setIsOpenEdit}
-                    projectId={selectedProject.project.id}
-                    projectName={selectedProject.project.name}
+                    projectId={selectedProject.id}
+                    projectName={selectedProject.name}
                     onSuccess={getProjects}
                 />
             )}

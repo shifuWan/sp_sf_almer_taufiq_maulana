@@ -51,7 +51,6 @@ declare namespace API {
             projectId: string
             createdAt: string
             updatedAt: string
-            project: ProjectModel
         }
 
         type ProjectCreateParams = Pick<ProjectModel, "name">
@@ -61,9 +60,16 @@ declare namespace API {
             members?: string[]
         }
 
+        interface ProjectMembershipModel extends ProjectModel {
+            memberships: {
+                id: string
+                user: User.UserModel
+            }[]
+        }
+
         type ProjectResponse = Common.ApiResponse<ProjectModel>
 
-        type ProjectResponseList = Common.ApiResponse<MembershipModel[]>
+        type ProjectResponseList = Common.ApiResponse<ProjectMembershipModel[]>
     }
 
     namespace Task {
