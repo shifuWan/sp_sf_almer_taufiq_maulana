@@ -61,6 +61,8 @@ declare namespace API {
             members?: string[]
         }
 
+        type ProjectResponse = Common.ApiResponse<ProjectModel>
+
         type ProjectResponseList = Common.ApiResponse<MembershipModel[]>
     }
 
