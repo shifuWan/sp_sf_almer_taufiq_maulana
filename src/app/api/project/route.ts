@@ -73,10 +73,9 @@ export async function GET(req: NextRequest) {
                 memberships: {
                     include: {
                         user: {
-                            select: {
-                                name: true,
-                                image: true,
-                            },
+                            omit: {
+                                password: true,
+                            }
                         },
                     },
                 },

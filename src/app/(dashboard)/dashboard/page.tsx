@@ -219,6 +219,11 @@ export default function Dashboard() {
                     onOpenChange={setIsOpenEdit}
                     projectId={selectedProject.id}
                     projectName={selectedProject.name}
+                    projectMembers={selectedProject.memberships.map((member) => ({
+                        id: member.user.id,
+                        name: member.user.name,
+                        email: member.user.email,
+                    }))}
                     onSuccess={getProjects}
                 />
             )}

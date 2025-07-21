@@ -25,6 +25,7 @@ interface EditProjectDialogProps {
     onOpenChange: (open: boolean) => void
     projectId: string
     projectName: string
+    projectMembers: User[]
     onSuccess?: () => void
 }
 
@@ -39,6 +40,7 @@ export function EditProjectDialog({
     onOpenChange,
     projectId,
     projectName,
+    projectMembers,
     onSuccess
 }: EditProjectDialogProps) {
     const form = useForm<z.infer<typeof projectEditSchema>>({
@@ -59,8 +61,6 @@ export function EditProjectDialog({
     const debouncedSearchQuery = useDebounce(searchQuery, 500)
 
     const handleSearchUser = useCallback(async (query: string) => {
-        // if (!query || query.length < 1) return
-
         setIsSearching(true)
         try {
             const response = await searchUser(query)
@@ -85,7 +85,7 @@ export function EditProjectDialog({
                 name: projectName,
                 members: []
             })
-            setSelectedUsers([])
+            setSelectedUsers(projectMembers)
             setSearchQuery("")
             setSearchResults([])
         }
@@ -102,7 +102,7 @@ export function EditProjectDialog({
     async function onSubmit(data: z.infer<typeof projectEditSchema>) {
         try {
             const memberIds = selectedUsers.map(user => user.id)
-            await editProject(projectId, { ...data, members: [...memberIds, session?.user?.id || ""] })
+            await editProject(projectId, { ...data, members: [...memberIds] })
             onOpenChange(false)
             onSuccess?.()
             toast.success("Project updated successfully")
@@ -134,14 +134,19 @@ export function EditProjectDialog({
 
 
     function handleSelectUser(user: User) {
-        setSelectedUsers(prev => [...prev, user])
+        if (!projectMembers.some(member => member.id == user.id)) {
+            setSelectedUsers(prev => [...prev, user])
+        }
         setSearchQuery("")
         setSearchResults([])
         setPopoverOpen(false)
     }
 
     function handleRemoveUser(userId: string) {
-        setSelectedUsers(prev => prev.filter(user => user.id !== userId))
+        if (session?.user?.id !== userId) {
+            setSelectedUsers(prev => prev.filter(user => user.id !== userId))
+        }
+        toast.warning("You cannot remove yourself from the project")
     }
 
     return (
